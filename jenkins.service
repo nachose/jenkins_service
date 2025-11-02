@@ -1,0 +1,32 @@
+[Unit]
+Description=Jenkins CI server (Docker)
+Documentation=https://www.jenkins.io/doc/
+After=network-online.target docker.service
+Requires=docker.service
+
+[Service]
+# Pull the image on first start / when it changes
+ExecStartPre=/usr/bin/docker pull jenkins/jenkins:lts-jdk17
+
+# Run the container
+ExecStart=/usr/bin/docker run --rm \
+  --name jenkins \
+  -p 8080:8080 -p 50000:50000 \
+  -v /var/lib/jenkins:/var/jenkins_home \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  --restart unless-stopped \
+  jenkins/jenkins:lts-jdk17
+
+# Clean up stopped container
+ExecStop=/usr/bin/docker stop jenkins
+
+# Restart on failure (with a small back-off)
+Restart=always
+RestartSec=10
+
+# Optional: limit resources
+# CPUShares=1024
+# Memory=2g
+
+[Install]
+WantedBy=multi-user.target
